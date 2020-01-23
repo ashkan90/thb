@@ -22,3 +22,7 @@ func RegisterRoute(path string, caller interface{}, middleware IMiddleware) {
 		Middleware: middleware,
 	})
 }
+
+func RegisterRouteGroup(middleware IMiddleware, group func()) {
+	group()
+}

@@ -8,6 +8,14 @@ import (
 )
 
 func main() {
+	// FEATURE:
+	system.RegisterRouteGroup(test.BlockMiddleware{}, func() {
+		system.RegisterRoute("/test", test.SomeController{}.Index, nil)
+		system.RegisterRoute("/test", test.SomeController{}.Index, nil)
+		system.RegisterRoute("/test", test.SomeController{}.Index, nil)
+		system.RegisterRoute("/test", test.SomeController{}.Index, nil)
+		system.RegisterRoute("/test", test.SomeController{}.Index, nil)
+	})
 	system.RegisterRoute("/test", test.SomeController{}.Index, test.BlockMiddleware{})
 	//system.RegisterRoute("/some", "con")
 	//system.RegisterRoute("/where", "con")
