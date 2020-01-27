@@ -37,12 +37,16 @@ func (s App) Serve() {
 
 func init() {
 	app = &App{
-		req:    &Request{ name: "emirhan" },
+		req:    &Request{name: "emirhan"},
 		router: &Router{},
 		config: &Server{},
 	}
 
 	ReadConf()
+}
+
+func CallFuncString(fn string, p interface{}) {
+
 }
 
 func CallFunc(a interface{}, p interface{}) {
@@ -53,19 +57,27 @@ func CallFunc(a interface{}, p interface{}) {
 		if p != nil {
 			switch reflect.TypeOf(p).Kind() {
 			case reflect.Slice:
-				in := make([]reflect.Value, 0)
-
-				for i := 0; i < params.Len(); i++ {
-					in = append(in, params.Index(i).Elem())
-				}
+				in := fillRouteParameters(params)
 				f.Call(in)
 			}
 		} else {
 			in := make([]reflect.Value, 0)
+			//The exception "reflect: Call with too few input arguments"
+			//is called after checking the number of parameters expected by the function
 			f.Call(in)
 		}
 		break
 	case reflect.String:
 		panic("String caller is not implemented yet.")
 	}
+}
+
+func fillRouteParameters(params reflect.Value) []reflect.Value {
+	in := make([]reflect.Value, 0)
+
+	for i := 0; i < params.Len(); i++ {
+		in = append(in, params.Index(i).Elem())
+	}
+
+	return in
 }

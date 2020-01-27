@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"reflect"
 	"runtime"
 	"thb/system"
@@ -9,25 +10,23 @@ import (
 
 func main() {
 	// FEATURE:
+	//system.RegisterRouteGroup(test.BlockMiddleware{}, func() {
+	//	system.RegisterRoute("/test", test.SomeController{}.Index, nil)
+	//	system.RegisterRoute("/test", test.SomeController{}.Index, nil)
+	//	system.RegisterRoute("/test", test.SomeController{}.Index, nil)
+	//	system.RegisterRoute("/test", test.SomeController{}.Index, nil)
+	//	system.RegisterRoute("/test", test.SomeController{}.Index, nil)
+	//})
 	system.RegisterRouteGroup(test.BlockMiddleware{}, func() {
-		system.RegisterRoute("/test", test.SomeController{}.Index, nil)
-		system.RegisterRoute("/test", test.SomeController{}.Index, nil)
-		system.RegisterRoute("/test", test.SomeController{}.Index, nil)
-		system.RegisterRoute("/test", test.SomeController{}.Index, nil)
-		system.RegisterRoute("/test", test.SomeController{}.Index, nil)
-	})
-	system.RegisterRoute("/test", test.SomeController{}.Index, test.BlockMiddleware{})
-	//system.RegisterRoute("/some", "con")
-	//system.RegisterRoute("/where", "con")
-	//system.RegisterRoute("/to", "con")
-	//system.RegisterRoute("/go", "con")
+		fmt.Println("group callback has called")
+		system.RegisterRoute("/test", &test.SomeController{}.Index, nil)
+	}).To(&test.SomeController{})
 
+	//system.RegisterRoute("/test", test.SomeController{}.Index, test.BlockMiddleware{})
+	//system.RegisterRoute("/otherTest", test.SomeController{}.Other, nil)
+	//
 	currentRoute := "/test"
-	for _, route := range system.GetRoutes() {
-		if currentRoute == route.Path {
-			system.CallFunc(route.Middleware.Handle(route.Caller), nil)
-		}
-	}
+	system.RunRouter(currentRoute)
 
 	system.GetApplication().Serve()
 }
