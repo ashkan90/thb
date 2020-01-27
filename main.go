@@ -17,15 +17,18 @@ func main() {
 	//	system.RegisterRoute("/test", test.SomeController{}.Index, nil)
 	//	system.RegisterRoute("/test", test.SomeController{}.Index, nil)
 	//})
-	system.RegisterRouteGroup(test.BlockMiddleware{}, func() {
+	system.RegisterRouteGroup(test.BlockMiddleware{Name: "qweqwe"}, func() {
 		fmt.Println("group callback has called")
-		system.RegisterRoute("/test", &test.SomeController{}.Index, nil)
-	}).To(&test.SomeController{})
+		system.RegisterRouteS("/some", test.SomeController{}, "Index")
+		//system.RegisterRoute("/test", test.SomeController{}.Index, nil)
+	})
+
+	system.RegisterRoute("/test", test.SomeController{}.Other, test.CSRFMiddleware{})
 
 	//system.RegisterRoute("/test", test.SomeController{}.Index, test.BlockMiddleware{})
 	//system.RegisterRoute("/otherTest", test.SomeController{}.Other, nil)
 	//
-	currentRoute := "/test"
+	currentRoute := "/some"
 	system.RunRouter(currentRoute)
 
 	system.GetApplication().Serve()

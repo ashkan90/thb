@@ -45,11 +45,15 @@ func init() {
 	ReadConf()
 }
 
-func CallFuncString(fn string, p interface{}) {
-
+func CallFuncS(m interface{}, p interface{}, c string) {
+	o := reflect.ValueOf(m).MethodByName(c)
+	params := reflect.ValueOf(p)
+	paramsAsValue := fillRouteParameters(params)
+	o.Call(paramsAsValue)
 }
 
-func CallFunc(a interface{}, p interface{}) {
+// I = interface, P = parameter
+func callFuncIP(a interface{}, p interface{}) {
 	f := reflect.ValueOf(a)
 	params := reflect.ValueOf(p)
 	switch reflect.TypeOf(a).Kind() {
@@ -70,6 +74,20 @@ func CallFunc(a interface{}, p interface{}) {
 	case reflect.String:
 		panic("String caller is not implemented yet.")
 	}
+}
+
+func CallFunc(a interface{}, p interface{}, method string) {
+	if method != "" {
+		CallFuncS(a, p, method)
+	} else {
+		switch p.(type) {
+		case []interface{}:
+			callFuncIP(a, p)
+		default:
+			panic("?")
+		}
+	}
+
 }
 
 func fillRouteParameters(params reflect.Value) []reflect.Value {

@@ -1,7 +1,5 @@
 package system
 
-import "fmt"
-
 type Router struct {
 	currentRoute route
 	routes       []route
@@ -40,6 +38,15 @@ func RegisterRoute(path string, caller interface{}, middleware IMiddleware) {
 	})
 }
 
+func RegisterRouteS(path string, caller interface{}, method string) {
+	GetApplication().router.routes = append(GetApplication().router.routes, route{
+		Path:       path,
+		Caller:     caller,
+		Method:     method,
+		Middleware: nil,
+	})
+}
+
 func RegisterRouteForGroup(path string, caller interface{}, method string) {
 	GetApplication().router.routes = append(GetApplication().router.routes, route{
 		Path:       path,
@@ -50,30 +57,30 @@ func RegisterRouteForGroup(path string, caller interface{}, method string) {
 }
 
 func RegisterRouteGroup(middleware IMiddleware, group func()) *routeGroup {
-	group()
+	middleware.Handle(group)
 	return &routeGroup{
 		middleware: middleware,
 		controller: nil,
 	}
 }
 
-func (rg *routeGroup) To(controller IController) {
-	rg.controller = controller
-
-	rg.controller.SetMiddleware(rg.middleware)
-	fmt.Println(rg.controller.GetMiddleware())
-}
+//func (rg *routeGroup) To(controller IController) {
+//	rg.controller = controller
+//
+//	rg.controller.SetMiddleware(rg.middleware)
+//	fmt.Println(rg.controller.GetMiddleware())
+//}
 
 func RunRouter(incomingURI string) {
 	for _, route := range GetRoutes() {
 		if incomingURI == route.Path {
 			GetRouter().currentRoute = route
 			if route.Middleware != nil {
-				CallFunc(route.Middleware.Handle(route.Caller), nil)
+				CallFunc(route.Caller, nil, route.Method)
 			} else {
 				CallFunc(route.Caller, []interface{}{
 					GetApplication().req,
-				}) // interface sliceın ın içinde parametreler belirtilmeli.
+				}, route.Method) // interface sliceın ın içinde parametreler belirtilmeli.
 			}
 		}
 	}

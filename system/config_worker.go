@@ -9,7 +9,7 @@ import (
 )
 
 func ReadConf() {
-	f, e := os.Open("C:\\Users\\IO\\go\\src\\thb\\config\\conf")
+	f, e := os.Open("C:\\Users\\user\\go\\src\\thb\\config")
 	if e != nil {
 		panic(e)
 	}
