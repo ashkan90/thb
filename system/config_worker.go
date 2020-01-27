@@ -9,7 +9,9 @@ import (
 )
 
 func ReadConf() {
-	f, e := os.Open("C:\\Users\\user\\go\\src\\thb\\config")
+	fmt.Println()
+	path, _ := os.Getwd()
+	f, e := os.Open(path + "\\config\\conf")
 	if e != nil {
 		panic(e)
 	}

@@ -9,23 +9,20 @@ type SomeController struct {
 	system.Controller
 }
 
-//func init() {
-//	SomeController{}.SetMiddlewareS(CSRFMiddleware{})
-//}
+func (s *SomeController) GMiddleware() system.IMiddleware {
+	return CSRFMiddleware{}
+}
 
 func (s SomeController) Index(request *system.Request) {
 
-	fmt.Println("Currently middleware's values are: ", s.GetMiddleware())
-	s.SetMiddleware(CSRFMiddleware{Name: "emirhan"})
-	fmt.Println("After changed middleware's values are: ", s.GetMiddleware())
-	fmt.Println("---------------------------------------------")
-	//
-	//fmt.Println("index has called")
-	//fmt.Println("request values are: ", request)
-	//
-	//system.Redirect("/otherTest")
-	//fmt.Println("qeqweqwe") // redirect yaptıktan sonra da varolan fonksiyon kesilmiyor.
-	//// bu bir sorun mu bilmiyorum
+	fmt.Println("Index method called")
+
+	fmt.Println(request.Except([]string{
+		"name",
+	}))
+
+	fmt.Println(request.Has("name"))
+	fmt.Println(request.Has("qwe"))
 }
 
 func (s SomeController) Other(request *system.Request) {

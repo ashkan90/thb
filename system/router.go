@@ -1,27 +1,42 @@
 package system
 
+import (
+	"fmt"
+	"net/http"
+)
+
 type Router struct {
-	currentRoute route
-	routes       []route
+	currentRoute *route
+	routes       []*route
 }
 
+type Handler func(*http.Response, *http.Request)
+
 type route struct {
-	Path       string
-	Caller     interface{}
-	Method     string
-	Middleware IMiddleware
+	Path           string
+	Caller         interface{}
+	Method         string
+	BelongsToGroup bool
+	Middleware     IMiddleware
 }
 
 type routeGroup struct {
 	middleware IMiddleware
-	controller IController
 }
 
-func (r *Router) SetCurrentRoute(_route route) {
+func (r *route) setMiddleware(middleware IMiddleware) {
+	r.Middleware = middleware
+}
+
+func (r *route) setBelongsToState(state bool) {
+	r.BelongsToGroup = state
+}
+
+func (r *Router) SetCurrentRoute(_route *route) {
 	r.currentRoute = _route
 }
 
-func GetRoutes() []route {
+func GetRoutes() []*route {
 	return GetApplication().router.routes
 }
 
@@ -31,69 +46,56 @@ func GetRouter() *Router {
 
 func RegisterRoute(path string, caller interface{}, middleware IMiddleware) {
 	// aynı route path varsa, yeni eklenecek olanı eskiye yaz.
-	GetApplication().router.routes = append(GetApplication().router.routes, route{
-		Path:       path,
-		Caller:     caller,
-		Middleware: middleware,
+	GetRouter().routes = append(GetRouter().routes, &route{
+		Path:           path,
+		Caller:         caller,
+		Method:         "",
+		BelongsToGroup: false,
+		Middleware:     middleware,
 	})
 }
 
 func RegisterRouteS(path string, caller interface{}, method string) {
-	GetApplication().router.routes = append(GetApplication().router.routes, route{
-		Path:       path,
-		Caller:     caller,
-		Method:     method,
-		Middleware: nil,
+	GetRouter().routes = append(GetRouter().routes, &route{
+		Path:           path,
+		Caller:         caller,
+		Method:         method,
+		BelongsToGroup: true,
+		Middleware:     nil,
 	})
 }
 
-func RegisterRouteForGroup(path string, caller interface{}, method string) {
-	GetApplication().router.routes = append(GetApplication().router.routes, route{
-		Path:       path,
-		Caller:     caller,
-		Method:     method,
-		Middleware: nil,
-	})
-}
-
-func RegisterRouteGroup(middleware IMiddleware, group func()) *routeGroup {
-	middleware.Handle(group)
-	return &routeGroup{
-		middleware: middleware,
-		controller: nil,
+func RegisterRouteGroup(middleware IMiddleware, group func()) {
+	group()
+	for _, route := range GetRoutes() {
+		fmt.Println(route.BelongsToGroup)
+		if route.BelongsToGroup {
+			route.setMiddleware(middleware)
+			route.setBelongsToState(false)
+		}
 	}
 }
-
-//func (rg *routeGroup) To(controller IController) {
-//	rg.controller = controller
-//
-//	rg.controller.SetMiddleware(rg.middleware)
-//	fmt.Println(rg.controller.GetMiddleware())
-//}
 
 func RunRouter(incomingURI string) {
 	for _, route := range GetRoutes() {
 		if incomingURI == route.Path {
 			GetRouter().currentRoute = route
-			if route.Middleware != nil {
-				CallFunc(route.Caller, nil, route.Method)
-			} else {
-				CallFunc(route.Caller, []interface{}{
-					GetApplication().req,
-				}, route.Method) // interface sliceın ın içinde parametreler belirtilmeli.
-			}
+
+			CallFunc(route, []interface{}{
+				GetRequest(),
+			}, "")
 		}
 	}
 }
 
 func Redirect(path string) {
-	routeOfPath := func() route {
+	routeOfPath := func() *route {
 		for _, route := range GetRoutes() {
 			if route.Path == path {
 				return route
 			}
 		}
-		return route{}
+		return &route{}
 	}()
 
 	if routeOfPath.Path != "" {

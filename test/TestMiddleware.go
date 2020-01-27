@@ -2,39 +2,22 @@ package test
 
 import (
 	"fmt"
-	"thb/system"
 )
 
-type BlockMiddleware struct {
-	Name string
-}
+type BlockMiddleware struct{}
 
 func (b BlockMiddleware) Handle(step func()) {
-	fmt.Println("block middleware has been called")
+	fmt.Println("BlockMiddleware has been called")
+	//fmt.Println(system.GetRequest().All())
 
-	if 10 != 11 {
-		step()
-	}
-	system.Redirect("/test")
+	step()
 	return
-	//return func() {
-	//	system.CallFunc(step, []interface{}{
-	//		system.GetRequest(),
-	//	}, "")
-	//}
 }
 
-type CSRFMiddleware struct {
-	Name string
-}
+type CSRFMiddleware struct{}
 
 func (b CSRFMiddleware) Handle(step func()) {
 	fmt.Println("CSRFMiddleware has been called")
 	step()
 	return
-	//return func() {
-	//	system.CallFunc(step, []interface{}{
-	//		system.GetRequest(),
-	//	}, "")
-	//}
 }
