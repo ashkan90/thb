@@ -1,7 +1,6 @@
 package system
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -68,7 +67,6 @@ func RegisterRouteS(path string, caller interface{}, method string) {
 func RegisterRouteGroup(middleware IMiddleware, group func()) {
 	group()
 	for _, route := range GetRoutes() {
-		fmt.Println(route.BelongsToGroup)
 		if route.BelongsToGroup {
 			route.setMiddleware(middleware)
 			route.setBelongsToState(false)

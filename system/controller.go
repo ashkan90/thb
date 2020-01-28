@@ -8,9 +8,9 @@ type ControllerMiddleware interface {
 	GMiddleware() IMiddleware
 }
 
-func (c *Controller) GMiddleware() IMiddleware {
-	return nil
-}
+//func (c *Controller) GMiddleware() IMiddleware {
+//	return nil
+//}
 
 func (c *Controller) SetMiddleware(middleware IMiddleware) {
 	c.Middleware = middleware

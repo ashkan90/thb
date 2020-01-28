@@ -36,6 +36,10 @@ func ReadConf() {
 					conf.port = fmt.Sprintf(":%s", value) // :8080
 				case "host":
 					conf.host = value
+				case "env":
+					conf.env = strings.ToLower(value)
+				case "response":
+					conf.response = strings.ToLower(value)
 				}
 				lineCount += 1
 			} else {
@@ -49,6 +53,25 @@ func ReadConf() {
 	GetApplication().config = conf
 }
 
-//func GetConf() conf {
-//	return GetApplication().config
-//}
+func prepareDefaults() {
+	switch GetApplication().config.env {
+	case "production":
+		break
+	case "development":
+		currPath, _ := os.Getwd()
+		path := fmt.Sprintf("%s\\test\\%s", currPath, endPoint)
+		GetApplication().view.basePath = path
+		break
+	}
+}
+
+func prepareResponseType() {
+	switch GetApplication().config.response {
+	case "json":
+		GetResponse().Header().Set("Content-Type", "application/json")
+		break
+	default:
+		GetResponse().Header().Set("Content-Type", "text/html")
+		break
+	}
+}

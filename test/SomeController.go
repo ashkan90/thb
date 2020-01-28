@@ -9,24 +9,21 @@ type SomeController struct {
 	system.Controller
 }
 
-func (s *SomeController) GMiddleware() system.IMiddleware {
-	return CSRFMiddleware{}
-}
-
 func (s SomeController) Index(request *system.Request) {
 
+	//gorm.Open()
+
 	fmt.Println("Index method called")
+	system.GetResponse().WriteString("try to this")
 
-	fmt.Println(request.Except([]string{
-		"name",
-	}))
+	fmt.Println(system.GetResponse().Header().Get("Content-type"))
 
-	fmt.Println(request.Has("name"))
-	fmt.Println(request.Has("qwe"))
+	//system.View("test", request.All())
+	return
 }
 
 func (s SomeController) Other(request *system.Request) {
 
 	fmt.Println("Other has called")
-	fmt.Println("request values are: ", request)
+	system.Redirect("/some")
 }

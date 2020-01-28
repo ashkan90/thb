@@ -10,7 +10,9 @@ func main() {
 		system.RegisterRouteS("/some", test.SomeController{}, "Index")
 	})
 
-	system.RegisterRoute("/test", test.SomeController{}.Other, test.CSRFMiddleware{})
+	system.RegisterRouteS("/testTwo", test.SomeController{}, "Other")
+
+	system.RegisterRoute("/test", test.SomeController{}.Other, nil)
 
 	system.GetApplication().Serve()
 }

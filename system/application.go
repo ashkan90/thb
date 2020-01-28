@@ -7,16 +7,20 @@ import (
 )
 
 type App struct {
-	req    *Request
-	router *Router
-	config *Server
+	req      *Request
+	router   *Router
+	config   *Server
+	view     *view
+	response *Response
 }
 
 type Server struct {
-	port    string
-	host    string
-	status  bool
-	Handler http.Handler
+	port     string
+	host     string
+	env      string
+	response string
+	status   bool
+	Handler  http.Handler
 }
 
 var app *App
@@ -25,10 +29,16 @@ func GetApplication() *App {
 	return app
 }
 
+func GetResponse() *Response {
+	return GetApplication().response
+}
+
 func (s *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	GetRequest().request = r
 	GetRequest().request.ParseForm()
-	//resp := &Response{w} // henüz hazır değil.
+	GetApplication().response.rw = w
+
+	prepareResponseType()
 
 	for _, route := range GetRoutes() {
 		if route.Path == r.URL.Path {
@@ -40,7 +50,7 @@ func (s *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *App) Serve() {
 	s.config.status = true
-	fmt.Printf("Server listening on %s... Status: %s", s.config.host+s.config.port, s.config.status)
+	fmt.Printf("Server listening on %s... \n\n", s.config.host+s.config.port)
 	e := http.ListenAndServe(s.config.host+s.config.port, s)
 	if e != nil {
 		s.config.status = false
@@ -50,12 +60,15 @@ func (s *App) Serve() {
 
 func init() {
 	app = &App{
-		req:    &Request{},
-		router: &Router{},
-		config: &Server{},
+		req:      &Request{},
+		router:   &Router{},
+		config:   &Server{},
+		response: &Response{},
+		view:     &view{},
 	}
 
 	ReadConf()
+	prepareDefaults()
 }
 
 func CallFuncS(m interface{}, p interface{}, c string) {
@@ -97,9 +110,14 @@ func CallFunc(a interface{}, p interface{}, method string) {
 		switch a.(type) {
 		case *route:
 			route := a.(*route)
-			route.Middleware.Handle(func() {
+			if route.Middleware != nil {
+				route.Middleware.Handle(func() {
+					CallFunc(route.Caller, p, route.Method)
+				})
+			} else {
 				CallFunc(route.Caller, p, route.Method)
-			})
+			}
+
 			break
 		}
 		switch p.(type) {

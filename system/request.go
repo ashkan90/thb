@@ -9,10 +9,6 @@ type Request struct {
 	request *http.Request
 }
 
-type Response struct {
-	http.ResponseWriter
-}
-
 func (r *Request) All() url.Values {
 	return r.request.Form
 }
