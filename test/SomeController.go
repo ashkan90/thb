@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"thb/system"
+	"thb/test/requests"
 )
 
 type SomeController struct {
@@ -25,5 +26,10 @@ func (s SomeController) Index(request *system.Request) {
 func (s SomeController) Other(request *system.Request) {
 
 	fmt.Println("Other has called")
-	system.Redirect("/some")
+	//system.Redirect("/some")
+}
+
+func (s SomeController) ControllerSpecificRequest(request *requests.UserRequest) {
+	fmt.Println("request values are: ", request.All())
+	fmt.Println("çalıştırdık lan sonunda")
 }

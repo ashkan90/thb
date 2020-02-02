@@ -37,11 +37,16 @@ func (s *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	GetRequest().request = r
 	GetRequest().request.ParseForm()
 	GetApplication().response.rw = w
+	//GetApplication().response.rw.Header().Set("Authorization", "Bearer qwewewe")
 
 	prepareResponseType()
 
 	for _, route := range GetRoutes() {
-		if route.Path == r.URL.Path {
+		if pathMatches(r.URL.Path, route.Path) && !methodMatches(r.Method, route.Method) /*route.Path == r.URL.Path && r.Method != string(route.Method)*/ {
+			fmt.Println("slaak truk")
+			return
+		}
+		if pathMatches(r.URL.Path, route.Path) /*route.Path == r.URL.Path*/ {
 			RunRouter(route.Path)
 			return
 		}
@@ -71,15 +76,20 @@ func init() {
 	prepareDefaults()
 }
 
-func CallFuncS(m interface{}, p interface{}, c string) {
+func CallFuncS(m interface{}, p interface{}, c string) []reflect.Value {
 	o := reflect.ValueOf(m).MethodByName(c)
 	params := reflect.ValueOf(p)
-	paramsAsValue := fillRouteParameters(params)
-	o.Call(paramsAsValue)
+	var paramsAsValue []reflect.Value
+	paramsAsValue = nil
+
+	if p != nil {
+		paramsAsValue = fillRouteParameters(params)
+	}
+	return o.Call(paramsAsValue)
 }
 
 // I = interface, P = parameter
-func callFuncIP(a interface{}, p interface{}) {
+func callFuncIP(a interface{}, p interface{}) []reflect.Value {
 	f := reflect.ValueOf(a)
 	params := reflect.ValueOf(p)
 	switch reflect.TypeOf(a).Kind() {
@@ -88,46 +98,50 @@ func callFuncIP(a interface{}, p interface{}) {
 			switch reflect.TypeOf(p).Kind() {
 			case reflect.Slice:
 				in := fillRouteParameters(params)
-				f.Call(in)
+				return f.Call(in)
 			}
 		} else {
 			in := make([]reflect.Value, 0)
 			//The exception "reflect: Call with too few input arguments"
 			//is called after checking the number of parameters expected by the function
-			f.Call(in)
+			return f.Call(in)
 		}
 		break
 	case reflect.String:
 		panic("String caller is not implemented yet.")
 	}
+
+	return []reflect.Value{}
 }
 
-func CallFunc(a interface{}, p interface{}, method string) {
+func CallFunc(a interface{}, p interface{}, method string) []reflect.Value {
+	var vals []reflect.Value
 	if method != "" {
-
-		CallFuncS(a, p, method)
+		vals = CallFuncS(a, p, method)
 	} else {
 		switch a.(type) {
 		case *route:
 			route := a.(*route)
 			if route.Middleware != nil {
 				route.Middleware.Handle(func() {
-					CallFunc(route.Caller, p, route.Method)
+					vals = CallFunc(route.Caller, p, route.CallerMethod)
 				})
 			} else {
-				CallFunc(route.Caller, p, route.Method)
+				vals = CallFunc(route.Caller, p, route.CallerMethod)
 			}
 
 			break
 		}
 		switch p.(type) {
 		case []interface{}:
-			callFuncIP(a, p)
+			vals = callFuncIP(a, p)
+			break
 		default:
 			panic("?")
 		}
 	}
 
+	return vals
 }
 
 func fillRouteParameters(params reflect.Value) []reflect.Value {
@@ -138,4 +152,12 @@ func fillRouteParameters(params reflect.Value) []reflect.Value {
 	}
 
 	return in
+}
+
+func methodMatches(incomingMethod string, routeMethod Method) bool {
+	return incomingMethod == string(routeMethod)
+}
+
+func pathMatches(incomingPath string, routePath string) bool {
+	return incomingPath == routePath
 }

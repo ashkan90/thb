@@ -5,14 +5,28 @@ import (
 	"thb/test"
 )
 
+func init() {
+	// Feature: Pre-registered middlewares.
+	//system.DefinedMiddlewares = []system.IMiddleware{
+	//	test.AuthorizationMiddleware{},
+	//	test.CSRFMiddleware{},
+	//	test.TrimMiddleware{},
+	//}
+}
+
 func main() {
 	system.RegisterRouteGroup(test.BlockMiddleware{}, func() {
-		system.RegisterRouteS("/some", test.SomeController{}, "Index")
+		// Feature: Method supported routes. such as GET, POST, PUT, DELETE
+		// and they can be registered like that,
+		// system.RegisterRoute()
+		system.RegisterRouteS("/some", test.SomeController{}, "Index", system.GET)
 	})
 
-	system.RegisterRouteS("/testTwo", test.SomeController{}, "Other")
+	system.RegisterRouteS("/testTwo", test.SomeController{}, "Other", system.GET)
 
-	system.RegisterRoute("/test", test.SomeController{}.Other, nil)
+	system.RegisterRoute("/test", test.SomeController{}.Other, test.AuthorizationMiddleware{})
+
+	system.RegisterRouteS("/spec", test.SomeController{}, "ControllerSpecificRequest", system.POST)
 
 	system.GetApplication().Serve()
 }
