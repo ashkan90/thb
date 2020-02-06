@@ -1,0 +1,10 @@
+<form action="/post" method="post">
+    <input type="text" name="name">
+    <input type="text" name="surname">
+
+    <button type="submit">Gönder</button>
+</form>
+
+{{ if hasError }}
+    <pre>{{ .Errors }}</pre>
+{{ end }}

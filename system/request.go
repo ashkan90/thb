@@ -34,6 +34,8 @@ type IValidate interface {
 
 var validate *validator.Validate
 
+var errorMessages validator.ValidationErrors
+
 func init() {
 	validate = validator.New()
 }
@@ -71,6 +73,33 @@ func (r *Request) Get(key string) []string {
 func (r *Request) Has(key string) bool {
 	_, ok := r.All()[key]
 	return ok
+}
+
+func Redirect(path string) {
+	routeOfPath := func() *route {
+		for _, route := range GetRoutes() {
+			if route.Path == path {
+				return route
+			}
+		}
+		return &route{}
+	}()
+
+	if routeOfPath.Path != "" {
+		GetApplication().router.currentRoute = routeOfPath
+		RunRouter(routeOfPath.Path)
+	}
+}
+
+func Back() {
+	if referer := GetRequest().request.Referer(); referer != "" {
+		u, _ := url.Parse(referer)
+		http.Redirect(GetResponse().rw, GetRequest().request, u.Path, http.StatusSeeOther)
+	}
+	//GetRequest().request.Header.Set("Error-Fields", errorMessages.Error())
+
+	//fmt.Println(GetResponse().rw.Header().Get("Referer"))
+	//http.Redirect(GetResponse().rw, GetRequest().request, GetResponse().Header().Get("Referer"), 302)
 }
 
 func GetRequest() *Request {

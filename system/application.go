@@ -10,17 +10,18 @@ type App struct {
 	req      *Request
 	router   *Router
 	config   *Server
-	view     *view
+	view     view
 	response *Response
 }
 
 type Server struct {
-	port     string
-	host     string
-	env      string
-	response string
-	status   bool
-	Handler  http.Handler
+	port         string
+	host         string
+	env          string
+	response     string
+	viewBasePath string
+	status       bool
+	Handler      http.Handler
 }
 
 var app *App
@@ -33,10 +34,16 @@ func GetResponse() *Response {
 	return GetApplication().response
 }
 
+func routeByPageRefresh() bool {
+	cache := GetRequest().request.Header.Get("Cache-Control")
+	return cache == "max-age=0"
+}
+
 func (s *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	GetRequest().request = r
 	GetRequest().request.ParseForm()
 	GetApplication().response.rw = w
+	//fmt.Println("Header: ", GetRequest().request.Referer())
 	//GetApplication().response.rw.Header().Set("Authorization", "Bearer qwewewe")
 
 	prepareResponseType()
@@ -69,7 +76,7 @@ func init() {
 		router:   &Router{},
 		config:   &Server{},
 		response: &Response{},
-		view:     &view{},
+		view:     view{},
 	}
 
 	ReadConf()

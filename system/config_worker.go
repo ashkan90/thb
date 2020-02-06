@@ -60,7 +60,7 @@ func prepareDefaults() {
 	case "development":
 		currPath, _ := os.Getwd()
 		path := fmt.Sprintf("%s\\test\\%s", currPath, endPoint)
-		GetApplication().view.basePath = path
+		GetApplication().config.viewBasePath = path
 		break
 	}
 }

@@ -24,9 +24,9 @@ func main() {
 
 	system.RegisterRouteS("/testTwo", test.SomeController{}, "Other", system.GET)
 
-	system.RegisterRoute("/test", test.SomeController{}.Other, test.AuthorizationMiddleware{})
+	system.RegisterRoute("/test", test.SomeController{}.Other, test.AuthorizationMiddleware{}, system.GET)
 
-	system.RegisterRouteS("/spec", test.SomeController{}, "ControllerSpecificRequest", system.POST)
+	system.RegisterRouteS("/post", test.SomeController{}, "ControllerSpecificRequest", system.POST)
 
 	system.GetApplication().Serve()
 }

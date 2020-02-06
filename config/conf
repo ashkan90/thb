@@ -2,4 +2,4 @@
 PORT = 8080
 HOST = localhost
 ENV  = development
-RESPONSE = json
+RESPONSE = html

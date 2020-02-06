@@ -1,6 +1,7 @@
 package system
 
 import (
+	"fmt"
 	"html/template"
 )
 
@@ -9,17 +10,33 @@ const (
 )
 
 type view struct {
-	basePath string
+	Errors []string
+	//basePath string
 }
 
-func (v *view) renderView(_template string, data interface{}) {
+type ViewValues map[string]interface{}
 
-	fullPath := GetApplication().view.basePath + _template + ".gohtml"
-	tmpl := template.Must(template.ParseFiles(fullPath))
+func (v view) renderView(_template string, data ViewValues) {
+
+	if data == nil {
+		data = make(ViewValues)
+	}
+
+	data["Errors"] = v.Errors
+
+	fullPath := GetApplication().config.viewBasePath + _template + ".gohtml"
+
+	tmpl := template.Must(template.New(_template + ".gohtml").Funcs(template.FuncMap{
+		"hasError": func() bool {
+			return len(v.Errors) > 0
+		},
+	}).ParseFiles(fullPath))
 	tmpl.Execute(GetApplication().response.rw, data)
 	return
 }
 
-func View(template string, data interface{}) {
+func View(template string, data ViewValues) {
+	fmt.Println("Request: ", GetRequest().All())
+	fmt.Println("wqe: ", GetRequest().Validate())
 	GetApplication().view.renderView(template, data)
 }

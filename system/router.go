@@ -2,6 +2,7 @@ package system
 
 import (
 	"fmt"
+	"github.com/go-playground/validator"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -48,11 +49,12 @@ func GetRouter() *Router {
 	return GetApplication().router
 }
 
-func RegisterRoute(path string, caller interface{}, middleware IMiddleware) {
+func RegisterRoute(path string, caller interface{}, middleware IMiddleware, method Method) {
 	// aynı route path varsa, yeni eklenecek olanı eskiye yaz.
 	GetRouter().routes = append(GetRouter().routes, &route{
 		Path:           path,
 		Caller:         caller,
+		Method:         method,
 		CallerMethod:   "",
 		BelongsToGroup: false,
 		Middleware:     middleware,
@@ -81,16 +83,22 @@ func RegisterRouteGroup(middleware IMiddleware, group func()) {
 }
 
 func RunRouter(incomingURI string) {
+	var view view
 	for _, route := range GetRoutes() {
 		if incomingURI == route.Path {
 			GetRouter().currentRoute = route
 			callerParams := make([]interface{}, 0)
 
-			if route.Method != "" {
+			// Router her çalıştığında, bellekte tutulan request error'u sıfırlanacak.
+			//GetRequest().Errors = []string{}
+
+			fmt.Println(route.Path, route.CallerMethod)
+
+			if route.CallerMethod != "" {
 				requestType := reflect.TypeOf((*IRequest)(nil)).Elem()
 
 				// start specific request parameter control
-				s := reflect.ValueOf(route.Caller).MethodByName(route.CallerMethod).Type().In(0).Elem()
+				s := reflect.ValueOf(route.Caller).MethodByName(route.CallerMethod).Type().In(0).Elem() // fonksiyonun ilk parametresi ele alınıyor.
 				for i := 0; i < s.NumField(); i++ {
 					if s.Field(i).Type.Implements(requestType) {
 						vp := reflect.New(s)
@@ -101,6 +109,7 @@ func RunRouter(incomingURI string) {
 						// döngü ile []reflect.Value ları ayrıştırmama gerek yok.
 						// Her zaman [0]. index'in Interface'i bana map i verecek.
 						reqParams := CallFunc(vpi.Interface(), nil, "All")[0].Interface()
+						m := make([]string, 0)
 
 						for k, v := range reqParams.(url.Values) {
 							// v[0] durumu, bir key e ait bir value olduğu sürece geçerlidir.
@@ -113,7 +122,15 @@ func RunRouter(incomingURI string) {
 						// validate metodu çağırılıyor. Doğrulama asıl bu aşamada başlayacak.
 						ret := CallFunc(vp.Interface(), nil, "Validate")
 						if len(ret) > 0 && ret[0].Interface() != nil {
-							fmt.Println(ret[0].Interface()) // write it to page
+							errorMessages = ret[0].Interface().(validator.ValidationErrors)
+							for _, err := range errorMessages {
+								m = append(m, fmt.Sprintf("Field '%s' is %s but given '%s'", err.Field(), err.Tag(), err.Value()))
+							}
+
+							view.Errors = m
+							GetApplication().view = view
+
+							Back()
 							return
 						}
 
@@ -136,23 +153,8 @@ func RunRouter(incomingURI string) {
 			//	}
 			//}
 
+			GetApplication().view = view
 			CallFunc(route, callerParams, "")
 		}
-	}
-}
-
-func Redirect(path string) {
-	routeOfPath := func() *route {
-		for _, route := range GetRoutes() {
-			if route.Path == path {
-				return route
-			}
-		}
-		return &route{}
-	}()
-
-	if routeOfPath.Path != "" {
-		GetApplication().router.currentRoute = routeOfPath
-		RunRouter(routeOfPath.Path)
 	}
 }
